@@ -1,5 +1,5 @@
 import random
-
+from copy import deepcopy
 import pygame
 
 pygame.init()
@@ -15,12 +15,22 @@ y1 = 300
 
 
 class Snake:
+    snake_length = 1
+
     def __init__(self):
         self.block_width = 10
         self.block_height = 10
         self.colour = blue
         self.head = pygame.Rect(dis.get_width() / 2, dis.get_height() / 2, self.block_width, self.block_height)
+        self.prev_head = None
         self.score = 0
+        self.body = []
+
+    def draw_snake(self):
+        pygame.draw.rect(dis, blue, self.head)
+        if self.body:
+            for body in self.body:
+                body.draw()
 
     def move_up(self):
         if self.head.y <= 0:
@@ -44,18 +54,59 @@ class Snake:
             self.head.x = self.block_width
         self.head.x += self.block_width
 
-    def move(self, up, down, left, right):
+    def move_head(self, up, down, left, right):
+        self.prev_head = deepcopy(self.head)
         if up:
             self.move_up()
+            self.move_body()
+            print(f"Head of snake: {self.head}")
         elif down:
             self.move_down()
+            self.move_body()
+            print(f"Head of snake: {self.head}")
         elif left:
             self.move_left()
+            self.move_body()
+            print(f"Head of snake: {self.head}")
         elif right:
             self.move_right()
+            self.move_body()
+            print(f"Head of snake: {self.head}")
+
+
+    def move_body(self):
+        if self.body:
+            for body in self.body:
+                body.move()
 
     def eat(self):
         self.score += 1
+        self.snake_length += 1
+        print("NOM")
+        if not self.body:
+            self.body.append(SnakeBody(self, self.snake_length))
+        else:
+            self.body.append(SnakeBody(self.body[-1], self.snake_length))
+        print(self.body)
+
+
+class SnakeBody:
+    def __init__(self, snake_head, body_num):
+        print(f"Initialising SnakeBody {body_num-1}")
+        self.pos = snake_head.prev_head
+        self.snake_head = snake_head
+        print(f"Position {self.pos}")
+        self.prev_head = None
+        self.body_num = body_num - 1
+
+    def move(self):
+        self.prev_head = deepcopy(self.pos)
+        self.pos = self.snake_head.prev_head
+        print(f"Body of snake{self.body_num}: {self.pos}")
+
+    def draw(self):
+        pygame.draw.rect(dis, blue, self.pos)
+
 
 
 class Food:
@@ -87,14 +138,13 @@ food = Food()
 clock = pygame.time.Clock()
 pygame.key.set_repeat(1, 20)
 
-
-
 score_font = pygame.font.SysFont("comicsansms", 35)
 
 
 def your_score(score):
     value = score_font.render(f"Score: {score}", True, yellow)
     dis.blit(value, [0, 0])
+
 
 """
 Main game loop
@@ -131,14 +181,14 @@ def game_loop():
                 if event.key == pygame.K_RIGHT:
                     right = False
 
-        snake.move(up, down, left, right)
+        snake.move_head(up, down, left, right)
         eat = food.is_eaten(snake)
         if eat:
             snake.eat()
 
         dis.fill(white)
         your_score(snake.score)
-        pygame.draw.rect(dis, blue, snake.head)
+        snake.draw_snake()
         food.draw_food()
         pygame.display.update()
 
@@ -146,6 +196,7 @@ def game_loop():
 
     pygame.quit()
     quit()
+
 
 game_loop()
 #
