@@ -59,20 +59,22 @@ class Snake:
         if up:
             self.move_up()
             self.move_body()
-            print(f"Head of snake: {self.head}")
         elif down:
             self.move_down()
             self.move_body()
-            print(f"Head of snake: {self.head}")
         elif left:
             self.move_left()
             self.move_body()
-            print(f"Head of snake: {self.head}")
         elif right:
             self.move_right()
             self.move_body()
-            print(f"Head of snake: {self.head}")
 
+    def check_collision(self):
+        if self.body:
+            for body in self.body:
+                if self.head.x == body.pos.x and self.head.y == body.pos.y:
+                    return True
+        return False
 
     def move_body(self):
         if self.body:
@@ -89,24 +91,25 @@ class Snake:
             self.body.append(SnakeBody(self.body[-1], self.snake_length))
         print(self.body)
 
+    def reset_snake(self):
+        self.body = []
+        self.snake_length = 1
+        self.head = pygame.Rect(dis.get_width() / 2, dis.get_height() / 2, self.block_width, self.block_height)
+
 
 class SnakeBody:
     def __init__(self, snake_head, body_num):
-        print(f"Initialising SnakeBody {body_num-1}")
         self.pos = snake_head.prev_head
         self.snake_head = snake_head
-        print(f"Position {self.pos}")
         self.prev_head = None
         self.body_num = body_num - 1
 
     def move(self):
         self.prev_head = deepcopy(self.pos)
         self.pos = self.snake_head.prev_head
-        print(f"Body of snake{self.body_num}: {self.pos}")
 
     def draw(self):
         pygame.draw.rect(dis, blue, self.pos)
-
 
 
 class Food:
@@ -131,14 +134,12 @@ class Food:
                 return True
         return False
 
+    def reset_food(self):
+        self.eaten = False
 
-snake = Snake()
-food = Food()
-
-clock = pygame.time.Clock()
-pygame.key.set_repeat(1, 20)
 
 score_font = pygame.font.SysFont("comicsansms", 35)
+font_style = pygame.font.SysFont("bahnschrift", 25)
 
 
 def your_score(score):
@@ -146,9 +147,19 @@ def your_score(score):
     dis.blit(value, [0, 0])
 
 
+def message(msg, colour):
+    mesg = font_style.render(msg, True, colour)
+    dis.blit(mesg, [dis.get_width() / 6, dis.get_height() / 4])
+
+
 """
 Main game loop
 """
+
+snake = Snake()
+food = Food()
+
+clock = pygame.time.Clock()
 
 
 def game_loop():
@@ -157,7 +168,44 @@ def game_loop():
     left = False
     right = False
     game_over = False
+    game_close = False
+    game_open = True
+    while game_open:
+        dis.fill(white)
+        message("Press SPACE to start game \\\ Press Q to quit", red)
+        pygame.display.update()
+        for event in pygame.event.get():
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_SPACE:
+                    game_open = False
+                if event.key == pygame.K_q:
+                    game_open = False
+            if event.type == pygame.QUIT:
+                game_open = False
+                game_over = True
     while not game_over:
+        while game_close:
+            dis.fill(white)
+            message("You lost :( Press SPACE to start again or press q to quit", red)
+            pygame.display.update()
+            for event in pygame.event.get():
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_SPACE:
+                        game_close = False
+                        up = False
+                        down = False
+                        left = False
+                        right = False
+                        snake.reset_snake()
+                        food.reset_food()
+
+                    if event.key == pygame.K_q:
+                        game_close = False
+                        game_over = True
+                if event.type == pygame.QUIT:
+                    game_close = False
+                    game_over = True
+
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 game_over = True
@@ -185,6 +233,8 @@ def game_loop():
         eat = food.is_eaten(snake)
         if eat:
             snake.eat()
+        if snake.check_collision():
+            game_close = True
 
         dis.fill(white)
         your_score(snake.score)
@@ -199,17 +249,3 @@ def game_loop():
 
 
 game_loop()
-#
-# keys = pygame.key.get_pressed()
-#     if keys[pygame.K_UP]:
-#         snake.move_up()
-#         print("Moving Up")
-#     if keys[pygame.K_DOWN]:
-#         snake.move_down()
-#         print("Moving Down")
-#     if keys[pygame.K_LEFT]:
-#         snake.move_left()
-#         print("Moving Left")
-#     if keys[pygame.K_RIGHT]:
-#         snake.move_right()
-#         print("Moving Right")
