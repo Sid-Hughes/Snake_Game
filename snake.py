@@ -39,19 +39,19 @@ class Snake:
             self.head.y -= self.block_height
 
     def move_down(self):
-        if self.head.y >= dis.get_height():
-            self.head.y = self.block_height
+        if self.head.y+self.block_height >= dis.get_height():
+            self.head.y = 0
         else:
             self.head.y += self.block_height
 
     def move_left(self):
         if self.head.x <= 0:
-            self.head.x = dis.get_width() - self.block_width
+            self.head.x = dis.get_width()
         self.head.x -= self.block_width
 
     def move_right(self):
-        if self.head.x >= dis.get_width():
-            self.head.x = self.block_width
+        if self.head.x >= dis.get_width()-self.block_width:
+            self.head.x = -self.block_width
         self.head.x += self.block_width
 
     def move_head(self, up, down, left, right):
